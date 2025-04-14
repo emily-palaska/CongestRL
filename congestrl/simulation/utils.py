@@ -17,3 +17,21 @@ def draw_topology(graph, layout=nx.circular_layout):
     pos = layout(graph)
     nx.draw(graph, pos, node_color='lightblue', node_size=5)
     plt.show()
+
+def demultiplex_packets(router_id, packets):
+    routed_packets = {}
+    for packet in packets:
+        if packet["destination_node"] == router_id: continue
+        next_idx = packet["path"].index(router_id) + 1
+        try:
+            routed_packets[next_idx].append(packet)
+        except KeyError:
+            routed_packets[next_idx] = [packet]
+    return routed_packets
+
+def shortest_path_policy(graph, start_node, destination_node):
+    try:
+        path = nx.shortest_path(graph, source=start_node, target=destination_node, weight='weight')
+        return path
+    except nx.NetworkXNoPath:
+        return None

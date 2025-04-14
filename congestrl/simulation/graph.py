@@ -1,57 +1,79 @@
-import matplotlib.pyplot as plt
 import networkx as nx
 from nodes import Router
-import random
-from env import *
+import random, queue, time
+from colorama import Fore
 
 class NetworkTopology:
-    def __init__(self, num_users=GLOBAL_USERS, num_routers=GLOBAL_ROUTERS):
+    def __init__(self, num_users=10, num_routers=3):
         self.num_users = num_users
         self.num_routers = num_routers
-
         self.graph = nx.Graph()
+        self.network_queue = queue.Queue()
+        self.routers = None
+
+    def initialize_routers(self):
         self._assign_users_to_router()
+        self.routers = [Router(router_id,
+                               self.user_ids_map,
+                               self.network_queue,
+                               self.num_users)
+                        for router_id in range(self.num_routers)]
 
-        self.routers = [Router(router_id, self.user_router_map[router_id]) for router_id in range(num_routers)]
-        self.graph.add_nodes_from([f'r{i}' for i in range(self.num_routers)])
-
-    def connect_routers(self, connection_density=0.05):
+    def initialize_graph(self, connection_density=0.05):
+        self.graph.add_nodes_from([i for i in range(self.num_routers)])
         for i in range(self.num_routers):
             for j in range(i + 1, self.num_routers):
                 if random.random() < connection_density:
-                    self.graph.add_edge(f'r{i}', f'r{j}')
+                    self.graph.add_edge(i, j)
 
     def _assign_users_to_router(self): # TODO not equal distribution
         ids = list(range(self.num_users))
         random.shuffle(ids)
-        self.user_router_map = []
-        for i in range(GLOBAL_ROUTERS):
-            start = i * self.num_users // self.num_routers
-            end = (i + 1) * self.num_users // self.num_routers - 1
-            self.user_router_map.append(ids[start:end])
+
+        base_size = self.num_users // self.num_routers
+        remainder = self.num_users % self.num_routers
+
+        self.user_ids_map = dict()
+        start = 0
+        for i in range(self.num_routers):
+            if i <= remainder:
+                sublist_size = base_size + 1
+            else:
+                sublist_size = base_size
+            end = start + sublist_size
+            sublist = ids[start:end]
+            sublist.sort()
+            self.user_ids_map[i] = sublist
+            start = end
 
     def start(self):
         for router in self.routers:
             router.start()
+            router.update_graph(self.graph)
+
+        time.sleep(5)
+        for router in self.routers:
+            if not router.network_queue.empty():
+                print(Fore.CYAN + f'Router {router.router_id}', router.network_queue.get())
+
+        #for router in self.routers:
+            #router.update_graph(self.graph)
 
     def stop(self):
         for router in self.routers:
             router.stop()
 
-    def draw_topology(self, layout=nx.circular_layout):
-        if not layout in [nx.circular_layout,
-                          nx.spring_layout,
-                          nx.kamada_kawai_layout,
-                          nx.spectral_layout,
-                          nx.random_layout]:
-            raise TypeError
-        pos = layout(self.graph)
-        nx.draw(self.graph, pos, node_color='lightblue', node_size=5)
-        plt.show()
-
 def main():
     net = NetworkTopology()
-    net.draw_topology()
+    net.initialize_routers()
+    net.initialize_graph(connection_density=1)
+
+    print('USERS MAP')
+    print(net.user_ids_map)
+    print('='*60)
+
+    net.start()
+    net.stop()
 
 if __name__ == '__main__':
     main()
