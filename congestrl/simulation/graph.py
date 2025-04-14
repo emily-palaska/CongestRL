@@ -4,7 +4,7 @@ import random, queue, time
 from colorama import Fore
 
 class NetworkTopology:
-    def __init__(self, num_users=10, num_routers=3):
+    def __init__(self, num_users=10, num_routers=10):
         self.num_users = num_users
         self.num_routers = num_routers
         self.graph = nx.Graph()
@@ -47,17 +47,21 @@ class NetworkTopology:
             start = end
 
     def start(self):
+        # Start the router thread
         for router in self.routers:
             router.start()
             router.update_graph(self.graph)
 
-        time.sleep(5)
-        for router in self.routers:
-            if not router.network_queue.empty():
-                print(Fore.CYAN + f'Router {router.router_id}', router.network_queue.get())
+        start_time = time.time()
+        while time.time() - start_time < 10:
+            # Forward the packets from the outgoing queues
+            for router in self.routers:
+                if not router.outgoing_queue.empty():
+                    for dest_id, packets in router.outgoing_queue.get().items():
+                        self.routers[int(dest_id)].incoming_queue.put(packets)
 
-        #for router in self.routers:
-            #router.update_graph(self.graph)
+            #for router in self.routers:
+                #router.update_graph(self.graph)
 
     def stop(self):
         for router in self.routers:
@@ -66,7 +70,7 @@ class NetworkTopology:
 def main():
     net = NetworkTopology()
     net.initialize_routers()
-    net.initialize_graph(connection_density=1)
+    net.initialize_graph(connection_density=0.5)
 
     print('USERS MAP')
     print(net.user_ids_map)

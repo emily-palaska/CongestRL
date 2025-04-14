@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+from colorama import Fore
 
 def find_key(my_dict, element):
     for key, values in my_dict.items():
@@ -21,12 +22,16 @@ def draw_topology(graph, layout=nx.circular_layout):
 def demultiplex_packets(router_id, packets):
     routed_packets = {}
     for packet in packets:
-        if packet["destination_node"] == router_id: continue
-        next_idx = packet["path"].index(router_id) + 1
+        if packet["destination_node"] == router_id:
+            print(Fore.GREEN + f"Router {router_id} received packet with path {packet["path"]}.")
+            continue
+        path = packet["path"]
+        current_index = path.index(router_id)
+        next_router_id = path[current_index + 1]
         try:
-            routed_packets[next_idx].append(packet)
+            routed_packets[next_router_id].append(packet)
         except KeyError:
-            routed_packets[next_idx] = [packet]
+            routed_packets[next_router_id] = [packet]
     return routed_packets
 
 def shortest_path_policy(graph, start_node, destination_node):
