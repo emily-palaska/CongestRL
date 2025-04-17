@@ -3,56 +3,23 @@ import random, threading, time, queue
 from utils import find_key, demultiplex_packets, shortest_path_policy
 from colorama import Fore
 
-class User:
-    def __init__(self, user_id, assigned_router_id, num_users, dist=np.random.uniform):
-        self.user_id = user_id
-        self.dist = dist # TODO add more distributions
-        self.num_users = num_users
-        self.assigned_router_id = assigned_router_id
-        self.send_rate = 0
-        self.total_lag = 0
-
-        self.rate_thread = threading.Thread(target=self.send_rate_thread)
-        self.stop_event = threading.Event()
-
-    def send_packet(self):
-        if self.dist(0, 1) < self.send_rate:
-            destination = random.randint(0, self.num_users - 1)
-            if destination != self.user_id: return destination
-        return None
-
-    def change_send_rate(self, rate = None):
-        if rate: self.send_rate = rate
-        else: self.send_rate = random.randint(0, 10) / 10
-
-    def announce(self, dest):
-        print(f'\tUser {self.user_id} wants to send to user {dest}')
-
-    def start(self):
-        self.rate_thread.start()
-
-    def stop(self):
-        self.stop_event.set()
-        self.rate_thread.join()
-
-    def send_rate_thread(self):
-        while 1:
-            if self.stop_event.is_set(): break
-            self.change_send_rate()
-            time.sleep(0.5)
-
+def user_decide_destination(user_id, num_users, send_rate=0.5 , dist=np.random.uniform):
+    if dist(0, 1) < send_rate:
+        destination = random.randint(0, num_users - 1)
+        if destination != user_id: return destination
+    return None
 
 class Router:
-    def __init__(self, router_id, user_ids_map, outgoing_queue, num_users, connection_capacity=10):
+    def __init__(self, router_id, user_ids_map, num_users):
         self.router_id = router_id
         self.num_users = num_users
         self.stop_event = threading.Event()
         self.graph = None
 
         self.user_ids_map = user_ids_map
-        self.users = [User(user_id, router_id, num_users) for user_id in user_ids_map[router_id]]
+        self.my_user_ids = user_ids_map[router_id]
 
-        self.outgoing_queue = outgoing_queue
+        self.outgoing_queue = queue.Queue()
         self.incoming_queue = queue.Queue()
         self.packet_queue = queue.Queue()
         self.router_thread = threading.Thread(target=self.router_thread)
@@ -63,15 +30,13 @@ class Router:
     def stop(self):
         self.stop_event.set()
         self.router_thread.join()
-        for user in self.users:
-            user.stop()
         print(Fore.RED + f'Router {self.router_id} stopped')
 
     def _create_packets(self, current_graph):
         packets = []
-        for user in self.users:
+        for user_id in self.my_user_ids:
             source_node = self.router_id
-            destination_user = user.send_packet()
+            destination_user = user_decide_destination(user_id, self.num_users)
             if destination_user is None: continue
 
             destination_node = find_key(self.user_ids_map, destination_user)
@@ -84,7 +49,7 @@ class Router:
                     "source_node": source_node,
                     "destination_node": destination_node,
                     "path": best_path,
-                    "dummy_data": f"Data from User {user.user_id} to User {destination_user}"
+                    "dummy_data": f"Data from User {user_id} to User {destination_user}"
                 }
                 packets.append(packet)
             else:
@@ -92,9 +57,6 @@ class Router:
         return packets
 
     def router_thread(self):
-        for user in self.users:
-            user.start()
-
         while not self.stop_event.is_set():
             if self.graph is None: continue
 
@@ -104,10 +66,10 @@ class Router:
 
             routed_packets = demultiplex_packets(self.router_id, packets)
             if routed_packets is not None:
-                import json
-                print(Fore.YELLOW + f'Router {self.router_id} outgoing queue: {json.dumps(routed_packets, indent=2)}')
+                #import json
+                #print(Fore.YELLOW + f'Router {self.router_id} outgoing queue: {json.dumps(routed_packets, indent=2)}')
                 self.outgoing_queue.put(routed_packets)
-            #print(Fore.YELLOW + f'Router {self.router_id} sleeping for {len(packets) / 10}s')
+
             time.sleep(len(packets))
 
 

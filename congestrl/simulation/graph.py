@@ -1,6 +1,6 @@
 import networkx as nx
 from nodes import Router
-import random, queue, time
+import random, time
 from colorama import Fore
 
 class NetworkTopology:
@@ -8,14 +8,12 @@ class NetworkTopology:
         self.num_users = num_users
         self.num_routers = num_routers
         self.graph = nx.Graph()
-        self.network_queue = queue.Queue()
         self.routers = None
 
     def initialize_routers(self):
         self._assign_users_to_router()
         self.routers = [Router(router_id,
                                self.user_ids_map,
-                               self.network_queue,
                                self.num_users)
                         for router_id in range(self.num_routers)]
 
@@ -53,24 +51,26 @@ class NetworkTopology:
             router.start()
 
         start_time = time.time()
-        while time.time() - start_time < 60:
+        while time.time() - start_time < 20:
             # Forward the packets from the outgoing queues
             for router in self.routers:
                 if not router.outgoing_queue.empty():
-                    for next_router_id, packets in router.outgoing_queue.get().items():
-                        next_router_id = int(next_router_id)
+                    routed_packets = router.outgoing_queue.get().items()
 
-                        if not self.graph.has_edge(router.router_id, next_router_id):
-                            print(Fore.BLUE + f'Iterating router {router.router_id}: No edge found between nodes {router.router_id} and {next_router_id}')
-                            import json
-                            print(Fore.BLUE + json.dumps(packets, indent=2))
+                    for next_router_id, packets in routed_packets:
+                        try:
+                            self.graph[router.router_id][next_router_id]['weight'] = len(packets)
+                        except Exception as e:
+                            print(Fore.RED +
+                                  f'Iterating router {router.router_id} with next router {next_router_id}:: '
+                                  + f'\nRouted packets: {routed_packets}'
+                                  + f'\nException: {e}')
 
-                        self.graph[router.router_id][next_router_id]['weight'] = len(packets)
                         self.routers[next_router_id].incoming_queue.put(packets)
 
             for router in self.routers:
                 router.graph = self.graph
-            print(Fore.BLUE + 'Graph updated for all users.')
+            #print(Fore.BLUE + 'Graph updated for all users.')
 
             #total_weight = sum(data['weight'] for u, v, data in self.graph.edges(data=True))
             #print(Fore.CYAN + f"Total Graph weight: {total_weight}")
@@ -86,6 +86,11 @@ def main():
 
     print('USERS MAP')
     print(net.user_ids_map)
+    print('='*60)
+
+    print('NETWORK')
+    for edge in net.graph.edges():
+        print(edge)
     print('='*60)
 
     net.start()

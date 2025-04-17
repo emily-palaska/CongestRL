@@ -20,18 +20,28 @@ def draw_topology(graph, layout=nx.circular_layout):
     plt.show()
 
 def demultiplex_packets(router_id, packets):
+    if not packets: return None
+
     routed_packets = {}
     for packet in packets:
         if packet["destination_node"] == router_id:
             print(Fore.GREEN + f"Router {router_id} received packet with path {packet["path"]}.")
             continue
+
         path = packet["path"]
         current_index = path.index(router_id)
         next_router_id = path[current_index + 1]
+
         try:
             routed_packets[next_router_id].append(packet)
         except KeyError:
             routed_packets[next_router_id] = [packet]
+    """
+    print(Fore.MAGENTA
+          + f'\nRouter {router_id} Demultiplexing'
+          + f'\nGot: {packets}'
+          + f'\nReturning: {routed_packets}')
+    """
     return routed_packets if not routed_packets == {} else None
 
 def shortest_path_policy(graph, start_node, destination_node):
