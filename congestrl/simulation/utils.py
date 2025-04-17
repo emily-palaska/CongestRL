@@ -32,7 +32,7 @@ def demultiplex_packets(router_id, packets):
             routed_packets[next_router_id].append(packet)
         except KeyError:
             routed_packets[next_router_id] = [packet]
-    return routed_packets
+    return routed_packets if not routed_packets == {} else None
 
 def shortest_path_policy(graph, start_node, destination_node):
     try:

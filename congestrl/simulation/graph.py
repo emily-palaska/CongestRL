@@ -24,7 +24,7 @@ class NetworkTopology:
         for i in range(self.num_routers):
             for j in range(i + 1, self.num_routers):
                 if random.random() < connection_density:
-                    self.graph.add_edge(i, j)
+                    self.graph.add_edge(i, j, weight=1)
 
     def _assign_users_to_router(self): # TODO not equal distribution
         ids = list(range(self.num_users))
@@ -49,19 +49,31 @@ class NetworkTopology:
     def start(self):
         # Start the router thread
         for router in self.routers:
+            router.graph = self.graph
             router.start()
-            router.update_graph(self.graph)
 
         start_time = time.time()
-        while time.time() - start_time < 10:
+        while time.time() - start_time < 60:
             # Forward the packets from the outgoing queues
             for router in self.routers:
                 if not router.outgoing_queue.empty():
-                    for dest_id, packets in router.outgoing_queue.get().items():
-                        self.routers[int(dest_id)].incoming_queue.put(packets)
+                    for next_router_id, packets in router.outgoing_queue.get().items():
+                        next_router_id = int(next_router_id)
 
-            #for router in self.routers:
-                #router.update_graph(self.graph)
+                        if not self.graph.has_edge(router.router_id, next_router_id):
+                            print(Fore.BLUE + f'Iterating router {router.router_id}: No edge found between nodes {router.router_id} and {next_router_id}')
+                            import json
+                            print(Fore.BLUE + json.dumps(packets, indent=2))
+
+                        self.graph[router.router_id][next_router_id]['weight'] = len(packets)
+                        self.routers[next_router_id].incoming_queue.put(packets)
+
+            for router in self.routers:
+                router.graph = self.graph
+            print(Fore.BLUE + 'Graph updated for all users.')
+
+            #total_weight = sum(data['weight'] for u, v, data in self.graph.edges(data=True))
+            #print(Fore.CYAN + f"Total Graph weight: {total_weight}")
 
     def stop(self):
         for router in self.routers:
