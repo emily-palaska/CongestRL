@@ -1,8 +1,8 @@
 import networkx as nx
+
 from routing import Router
 import random, time
 from colorama import Fore
-from congestrl.visualization.congestion_graph import draw_congestion_graph
 
 class NetworkTopology:
     def __init__(self, num_users=10, num_routers=10, connection_density=0.5):
@@ -11,16 +11,17 @@ class NetworkTopology:
         self.graph = nx.Graph()
         self.routers = None
         self.connection_density = connection_density
+        self.graph_weights = []
 
         self._initialize_graph(connection_density=connection_density)
         self._initialize_routers()
 
     def _initialize_routers(self):
         self._assign_users_to_router()
-        self.routers = [Router(router_id,
-                               self.user_ids_map,
-                               self.num_users,
-                               self.graph)
+        self.routers = [Router(router_id=router_id,
+                               user_ids_map=self.user_ids_map,
+                               num_users=self.num_users,
+                               graph=self.graph)
                         for router_id in range(self.num_routers)]
         self._assign_connected_routers()
 
@@ -41,10 +42,8 @@ class NetworkTopology:
         self.user_ids_map = dict()
         start = 0
         for i in range(self.num_routers):
-            if i <= remainder:
-                sublist_size = base_size + 1
-            else:
-                sublist_size = base_size
+            if i <= remainder: sublist_size = base_size + 1
+            else: sublist_size = base_size
             end = start + sublist_size
             sublist = ids[start:end]
             sublist.sort()
@@ -59,43 +58,57 @@ class NetworkTopology:
             }
             self.routers[i].connected_routers = connected_routers
 
-    def start(self):
+    def start(self, run_time=20):
         for router in self.routers:
             router.graph = self.graph
             router.start()
 
         start_time = time.time()
-        while time.time() - start_time < 20:
-            total_weight = sum(w for _, w in self.graph.edges())
-            print(Fore.CYAN + f"\nTotal Graph weight: {total_weight}")
+        while time.time() - start_time < run_time:
+            total_weight = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
+            self.graph_weights.append(total_weight)
+            print(Fore.CYAN + f"Total Graph weight: {total_weight}")
             time.sleep(1)
 
     def stop(self):
         for router in self.routers:
             router.stop()
 
+    def reset(self):
+        return NotImplemented
+
 def main():
-    net = NetworkTopology(num_users=500, num_routers=50, connection_density=0.5)
+    net = NetworkTopology(num_users=50, num_routers=10, connection_density=0.5)
 
     print('USERS MAP')
     print(net.user_ids_map)
     print('='*60)
 
-    """
-    print('NETWORK')
-    for edge in net.graph.edges():
-        print(edge)
-    print('='*60)
-    """
-
-    net.start()
+    net.start(run_time=60)
     net.stop()
 
     congestion_times = {
         router.router_id: router.congestion_times
             for router in net.routers
     }
-    draw_congestion_graph(congestion_times)
+    #draw_congestion_graph(congestion_times)
+
+    packets_created = {
+        router.router_id: router.packets_created
+            for router in net.routers
+    }
+
+    packets_received = {
+        router.router_id: router.packets_received
+        for router in net.routers
+    }
+
+    print(f'Packets created: {packets_created} -> {sum(packets_created.values())}')
+    print(f'Packets received: {packets_received} -> {sum(packets_received.values())}')
+
+    from congestrl.visualization.graphs import draw_graph_weights
+    draw_graph_weights(net.graph_weights)
+
 
 if __name__ == '__main__':
     main()

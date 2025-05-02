@@ -14,3 +14,13 @@ def draw_congestion_graph(congestion_times):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+def draw_graph_weights(graph_weights):
+    plt.figure(figsize=(12, 6))
+    plt.plot(graph_weights)
+    plt.xlabel("Time")
+    plt.ylabel("Total Edge Weight")
+    plt.title("Total Edge Weights during Runtime")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

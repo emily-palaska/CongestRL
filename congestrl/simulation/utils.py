@@ -3,12 +3,12 @@ from colorama import Fore
 import random
 import numpy as np
 
-def create_packets(router_id, user_ids_map, graph):
+def create_packets(router_id, user_ids_map, graph, send_rate=0.01):
     packets = []
     num_users = sum(len(users) for _, users in user_ids_map.items())
     for user_id in user_ids_map[router_id]:
         source_node = router_id
-        destination_user = user_decide_destination(user_id, num_users)
+        destination_user = user_decide_destination(user_id, num_users, send_rate=send_rate)
         if destination_user is None: continue
 
         destination_node = find_key(user_ids_map, destination_user)
@@ -16,23 +16,23 @@ def create_packets(router_id, user_ids_map, graph):
         best_path = shortest_path_policy(graph, source_node, destination_node)
 
         if best_path:
-            packet = {
+            packets.append({
                 "source_node": source_node,
                 "destination_node": destination_node,
                 "path": best_path,
                 "weight": random.randint(1, 10)
-            }
-            packets.append(packet)
+            })
         else:
             print(Fore.BLUE + f"Router {source_node} no path to Router {destination_node}")
     return packets
 
 def demultiplex_packets(router_id, packets):
-    if not packets: return None
-    routed_packets = {}
+    routed_packets = {router_id: 0}
+    if not packets: return routed_packets
 
     for packet in packets:
         if packet["destination_node"] == router_id:
+            routed_packets[router_id] += 1
             #print(Fore.GREEN + f"\nRouter {router_id} received packet with path {packet["path"]}.")
             continue
 
@@ -41,13 +41,11 @@ def demultiplex_packets(router_id, packets):
         current_index = path.index(router_id)
         next_router_id = path[current_index + 1]
 
-        try:
-            routed_packets[next_router_id].append(packet)
-        except KeyError:
-            routed_packets[next_router_id] = [packet]
-    return routed_packets if not routed_packets == {} else None
+        try: routed_packets[next_router_id].append(packet)
+        except KeyError: routed_packets[next_router_id] = [packet]
+    return routed_packets
 
-def user_decide_destination(user_id, num_users, send_rate=0.5 , dist=np.random.normal):
+def user_decide_destination(user_id, num_users, send_rate=0.1 , dist=np.random.normal):
     number = dist(0, 1)
     if send_rate > number > - send_rate:
         destination = random.randint(0, num_users - 1)
