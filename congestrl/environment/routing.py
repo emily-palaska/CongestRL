@@ -1,5 +1,5 @@
 import threading, time, queue
-from utils import demultiplex_packets, create_packets
+from congestrl.core import demultiplex_packets, create_packets
 from colorama import Fore
 
 class Router:
@@ -10,7 +10,7 @@ class Router:
         self.graph = graph
 
         self.user_ids_map = user_ids_map
-        self.connected_routers = None
+        self.neighbor_routers = None
 
         self.incoming_queue = queue.Queue()
         self.router_thread = threading.Thread(target=self.router_thread)
@@ -34,7 +34,7 @@ class Router:
             new_weight = sum(packet["weight"] for packet in packets)
             sleep_time += new_weight
             self.graph[self.router_id][next_router_id]['weight'] = new_weight
-            self.connected_routers[next_router_id].incoming_queue.put(packets)
+            self.neighbor_routers[next_router_id].incoming_queue.put(packets)
         return sleep_time
 
     def router_thread(self):
