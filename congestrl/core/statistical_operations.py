@@ -2,19 +2,10 @@ import random
 from typing import Callable, Optional
 import numpy as np
 
-def random_balanced_partition(u : int, r : int):
-    """Randomly partitions users into balanced groups (with at most ±1 size difference)."""
-    user_ids = list(range(u))
-    random.shuffle(user_ids)
-
-    base_size, remainder = divmod(u, r)
-    sublist_sizes = [base_size + 1] * remainder + [base_size] * (r - remainder)
-
-    return {
-        r_id: sorted(
-            user_ids[sum(sublist_sizes[:r_id]):sum(sublist_sizes[:r_id + 1])]
-        ) for r_id in range(r)
-    }
+def distributed_partition(u : int, r : int, idx: int):
+    if idx < 0 or idx >= r: raise ValueError("Index must be between 0 and r-1")
+    base, remainder = u // r, u % r
+    return base + 1 if idx < remainder else base
 
 def probabilistic_redirect(
         source_id: int,

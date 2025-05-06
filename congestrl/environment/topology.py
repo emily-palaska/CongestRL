@@ -1,28 +1,28 @@
 from routing import Router
 import time
 from colorama import Fore
-from congestrl.core import ensure_connectivity, create_random_graph, random_balanced_partition
-from congestrl.visualization.graphs import draw_graph_weights, draw_congestion_graph
+from congestrl.core import ensure_connectivity, create_random_graph
+from congestrl.visualization.graphs import draw_weights_runtime, draw_congestion_graph
 
 class NetworkTopology:
     def __init__(self, num_users=10, num_routers=10, connection_density=0.5):
+        # Arguments
         self.num_users = num_users
         self.num_routers = num_routers
-
-        self.routers = []
         self.connection_density = connection_density
+        # Placeholders
+        self.routers = []
         self.weights_runtime = []
-
+        # Initialization
         self.graph = ensure_connectivity(
-            create_random_graph(self.num_routers,
+            create_random_graph(num_nodes=self.num_routers,
                                 connection_density=connection_density)
         )
-        self.user_ids_map = random_balanced_partition(self.num_users, self.num_routers)
         self._initialize_routers()
 
     def _initialize_routers(self):
         self.routers = [Router(router_id=router_id,
-                               user_ids_map=self.user_ids_map,
+                               num_routers=self.num_routers,
                                num_users=self.num_users,
                                graph=self.graph)
                         for router_id in range(self.num_routers)]
@@ -59,15 +59,11 @@ class NetworkTopology:
             self.graph[u][v]['weight'] = 1
 
 def main():
-    net = NetworkTopology(num_users=50, num_routers=10, connection_density=0.5)
-
-    print('USERS MAP')
-    print(net.user_ids_map)
-    print('='*60)
+    net = NetworkTopology(num_users=50, num_routers=10, connection_density=0.1)
 
     print('CONNECTED_ROUTERS')
     for router in net.routers:
-        print(router.neighbor_routers)
+        print(f'{router.router_id}: {router.neighbor_routers.keys()}')
     print('=' * 60)
 
     net.start(run_time=10)
@@ -91,9 +87,7 @@ def main():
 
     print(f'Packets created: {packets_created} -> {sum(packets_created.values())}')
     print(f'Packets received: {packets_received} -> {sum(packets_received.values())}')
-
-    from congestrl.visualization.graphs import draw_graph_weights
-    draw_graph_weights(net.weights_runtime)
+    draw_weights_runtime(net.weights_runtime)
 
 
 if __name__ == '__main__':

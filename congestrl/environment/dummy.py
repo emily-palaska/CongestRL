@@ -1,3 +1,3 @@
 a = 3
 b = None
-if b: print(a)
+if not b: print(a)

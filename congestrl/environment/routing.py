@@ -1,21 +1,21 @@
 import threading, time, queue
-from congestrl.core import demultiplex_packets, create_packets
+from congestrl.core import demultiplex_packets, create_packets, distributed_partition
 from colorama import Fore
 
 class Router:
-    def __init__(self, router_id, user_ids_map, num_users, graph):
+    def __init__(self, router_id, num_routers, num_users, graph):
+        # Arguments
         self.router_id = router_id
-        self.num_users = num_users
-        self.stop_event = threading.Event()
+        self.num_routers = num_routers
+        self.local_users = distributed_partition(num_users, num_routers, router_id)
         self.graph = graph
-
-        self.user_ids_map = user_ids_map
-        self.neighbor_routers = None
-
+        # Threading initialization
+        self.stop_event = threading.Event()
         self.incoming_queue = queue.Queue()
         self.router_thread = threading.Thread(target=self.router_thread)
+        # Placeholders
+        self.neighbor_routers = None
         self.congestion_times = []
-
         self.packets_created = 0
         self.packets_received = 0
 
@@ -41,7 +41,7 @@ class Router:
         while not self.stop_event.is_set():
             if self.graph is None: continue
 
-            packets = create_packets(self.router_id, self.user_ids_map, self.graph)
+            packets = create_packets(self.router_id, self.local_users, self.num_routers, self.graph)
             self.packets_created += len(packets)
             if not self.incoming_queue.empty():
                 packets.extend(self.incoming_queue.get())

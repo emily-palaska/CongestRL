@@ -4,42 +4,25 @@ import random
 from colorama import Fore
 import numpy as np
 
-def find_destination_node(user_ids_map, dest_user, source_node):
-    for dest_node, users in user_ids_map.items():
-        if dest_user in users and dest_node != source_node:
-            return dest_node
-    return None
-
-def create_packets(router_id, user_ids_map, graph, send_rate=0.01):
+def create_packets(router_id, local_users, num_routers, graph, send_rate=0.01):
     packets = []
-    num_users = sum(len(users) for _, users in user_ids_map.items())
-    for user_id in user_ids_map[router_id]:
+    for user_id in range(local_users):
         source_node = router_id
-        if (
-                dest_user := probabilistic_redirect(
-                    source_id=user_id,
-                    num_nodes=num_users,
-                    activation_rate=send_rate
-                )
-        ) is None: continue
+        if (dest_node := probabilistic_redirect(
+            source_id=router_id,
+            num_nodes=num_routers,
+            activation_rate=send_rate
+        )) is None: continue
 
-        if (
-                destination_node := find_destination_node(
-                    user_ids_map=user_ids_map,
-                    dest_user=dest_user,
-                    source_node=router_id
-                )
-        ) is None: continue
-
-        if best_path := shortest_path_policy(graph, source_node, destination_node):
+        if best_path := shortest_path_policy(graph, source_node, dest_node):
             packets.append({
                 "source_node": source_node,
-                "destination_node": destination_node,
+                "destination_node": dest_node,
                 "path": best_path,
                 "weight": random.randint(1, 10)
             })
         else:
-            print(Fore.BLUE + f"Router {source_node} no path to Router {destination_node}")
+            print(Fore.BLUE + f"Router {source_node} no path to Router {dest_node}")
     return packets
 
 def demultiplex_packets(router_id, packets):
