@@ -16,6 +16,7 @@ class Router:
         # Placeholders
         self.neighbor_routers = None
         self.congestion_times = []
+        self.delay_times = []
         self.packets_created = 0
         self.packets_received = 0
 
@@ -47,7 +48,8 @@ class Router:
                 packets.extend(self.incoming_queue.get())
 
             routed_packets = demultiplex_packets(self.router_id, packets)
-            self.packets_received += routed_packets[self.router_id]
+            self.packets_received += len(routed_packets[self.router_id])
+            self.delay_times.extend(routed_packets[self.router_id])
             sleep_time = self._forward_packets(routed_packets) if len(routed_packets) > 1 else 0
             self.congestion_times.append(sleep_time)
             time.sleep(sleep_time / 10)

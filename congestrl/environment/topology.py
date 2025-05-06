@@ -73,13 +73,10 @@ def main():
         router.router_id: router.congestion_times
             for router in net.routers
     }
-    draw_congestion_graph(congestion_times)
-
     packets_created = {
         router.router_id: router.packets_created
             for router in net.routers
     }
-
     packets_received = {
         router.router_id: router.packets_received
         for router in net.routers
@@ -87,6 +84,9 @@ def main():
 
     print(f'Packets created: {packets_created} -> {sum(packets_created.values())}')
     print(f'Packets received: {packets_received} -> {sum(packets_received.values())}')
+    print('Delay times:')
+    for router in net.routers: print(router.delay_times)
+    draw_congestion_graph(congestion_times)
     draw_weights_runtime(net.weights_runtime)
 
 
