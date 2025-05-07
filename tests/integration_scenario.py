@@ -1,4 +1,4 @@
-from congestrl.environment.network import NetworkTopologyEnv
+from agents.network import NetworkTopologyEnv
 
 def main():
     env = NetworkTopologyEnv(num_users=50, num_routers=10, connection_density=0.1)
