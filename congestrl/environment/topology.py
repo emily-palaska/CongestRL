@@ -2,7 +2,7 @@ from routing import Router
 import time
 from colorama import Fore
 from congestrl.core import ensure_connectivity, create_random_graph
-from congestrl.visualization.graphs import draw_weights_runtime, draw_congestion_graph
+from congestrl.visualization.graphs import draw_weights_runtime
 
 class NetworkTopology:
     def __init__(self, num_users=10, num_routers=10, connection_density=0.5):
@@ -43,10 +43,10 @@ class NetworkTopology:
 
         start_time = time.time()
         while time.time() - start_time < run_time:
-            total_weight = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
-            self.weights_runtime.append(total_weight)
-            print(Fore.CYAN + f"Total Graph weight: {total_weight}")
             time.sleep(1)
+            global_congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
+            self.weights_runtime.append(global_congestion)
+            print(Fore.CYAN + f"Total Graph weight: {global_congestion}")
 
     def stop(self):
         for router in self.routers:
@@ -63,16 +63,12 @@ def main():
 
     print('CONNECTED_ROUTERS')
     for router in net.routers:
-        print(f'{router.router_id}: {router.neighbor_routers.keys()}')
+        print(f'{router.router_id}: {list(router.neighbor_routers.keys())}')
     print('=' * 60)
 
     net.start(run_time=10)
     net.stop()
 
-    congestion_times = {
-        router.router_id: router.congestion_times
-            for router in net.routers
-    }
     packets_created = {
         router.router_id: router.packets_created
             for router in net.routers
@@ -86,7 +82,6 @@ def main():
     print(f'Packets received: {packets_received} -> {sum(packets_received.values())}')
     print('Delay times:')
     for router in net.routers: print(router.delay_times)
-    draw_congestion_graph(congestion_times)
     draw_weights_runtime(net.weights_runtime)
 
 

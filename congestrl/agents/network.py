@@ -1,7 +1,7 @@
 import numpy as np
 import gym
 from gym import spaces
-from topology import NetworkTopology
+from congestrl.environment.topology import NetworkTopology
 
 class CongestionControlEnv(gym.Env):
     def __init__(self, num_routers=10, num_users=50, connection_density=0.1, congestion_limit=200):

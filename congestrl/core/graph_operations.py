@@ -7,7 +7,7 @@ def ensure_connectivity(G):
         while len(components) > 1:
             node1 = random.choice(list(components[0]))
             node2 = random.choice(list(components[1]))
-            G.add_edge(node1, node2)
+            G.add_edge(node1, node2, weight=1)
             components = list(nx.connected_components(G))
     return G
 
