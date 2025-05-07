@@ -9,8 +9,6 @@ class CongestionControlEnv(gym.Env):
         self.num_routers = num_routers
         self.num_users = num_users
         self.congestion_limit = congestion_limit
-
-        # Initialize network
         self.network = NetworkTopology(num_users=num_users, num_routers=num_routers, connection_density=connection_density)
 
         # Action: each router decides to {0: decrease, 1: maintain, 2: increase} traffic
@@ -32,6 +30,9 @@ class CongestionControlEnv(gym.Env):
         self.current_step = 0
         return self._get_obs()
 
+    def stop(self):
+        self.network.stop()
+
     def _get_obs(self):
         total_weight = sum(data['weight'] for _, _, data in self.network.graph.edges(data=True))
         return np.array([total_weight] + self.last_actions + [self.total_packets], dtype=np.float32)
@@ -42,11 +43,10 @@ class CongestionControlEnv(gym.Env):
 
         # Modify router behavior here (you can scale packet creation, e.g., via a parameter in Router)
         for router, action in zip(self.network.routers, actions):
-            # simulate effect of action (basic example: scale user count)
             if action == 0:
-                router.local_users = max(1, int(router.local_users * 0.8))
+                router.send_rate = max(0, router.send_rate - 10)
             elif action == 2:
-                router.local_users = int(router.local_users * 1.2)
+                router.local_users = min(router.max_send_rate, router.send_rate + 10)
 
         self.network.start(run_time=1)  # simulate 1 second
         self.network.stop()
