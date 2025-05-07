@@ -3,27 +3,22 @@ from congestrl.core import demultiplex_packets, create_packets, distributed_part
 from colorama import Fore
 
 class Router:
-    def __init__(self, router_id, num_routers, num_users, graph):
+    def __init__(self, router_id, num_routers, num_users, graph, events):
         # Arguments
         self.router_id, self.num_routers, self.graph = router_id, num_routers, graph
         self.local_users = distributed_partition(num_users, num_routers, router_id)
         # Threading initialization
-        self.stop_event = threading.Event()
+        self.start_event, self.stop_event, self.freeze_event = events
         self.incoming_queue, self.buffer = queue.Queue(), queue.Queue()
         self.router_thread = threading.Thread(target=self.router_thread)
         # Placeholders
         self.neighbor_routers = None
         self.congestion_times, self.delay_times = [], []
         self.packets_created, self.packets_received = 0, 0
-        self.send_rate, self.max_send_rate = None, 100
+        self.send_rate, self.max_send_rate = None, 1000
 
     def start(self):
         self.router_thread.start()
-
-    def stop(self):
-        self.stop_event.set()
-        self.router_thread.join()
-        print(Fore.YELLOW + f'Router {self.router_id} stopped')
 
     def _decide_packets_to_send(self):
         return self.send_rate if self.send_rate else self.max_send_rate
@@ -47,19 +42,22 @@ class Router:
         return [self.buffer.get() for _ in range(num_packets)]
 
     def router_thread(self):
-        while not self.stop_event.is_set():
+        self.start_event.wait()
+        while True:
+            if self.stop_event.is_set(): break
+            if self.freeze_event.is_set(): self.start_event.wait()
             if self.graph is None: continue
 
             created_packets = create_packets(self.router_id, self.local_users, self.num_routers, self.graph)
             self.packets_created += len(created_packets)
             self._add_to_buffer(created_packets)
-            if not self.incoming_queue.empty():
-                self._add_to_buffer(self.incoming_queue.get())
+            if incoming_packets := self.incoming_queue.qsize():
+                for _ in range(incoming_packets): self._add_to_buffer(self.incoming_queue.get())
 
             routed_packets = demultiplex_packets(self.router_id, self._get_from_buffer())
             self.packets_received += len(routed_packets[self.router_id])
             self.delay_times.extend(routed_packets[self.router_id])
 
-            #sleep_time = self._forward_packets(routed_packets) if len(routed_packets) > 1 else 0
-            #self.congestion_times.append(sleep_time)
+            sleep_time = self._forward_packets(routed_packets) if len(routed_packets) > 1 else 0
+            self.congestion_times.append(sleep_time)
             #time.sleep(sleep_time / 1000)

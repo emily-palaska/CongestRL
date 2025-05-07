@@ -3,6 +3,7 @@ import time
 from colorama import Fore
 from congestrl.core import ensure_connectivity, create_random_graph
 from congestrl.visualization.graphs import draw_weights_runtime
+import threading
 
 class NetworkTopology:
     def __init__(self, num_users=10, num_routers=10, connection_density=0.5):
@@ -13,6 +14,7 @@ class NetworkTopology:
         # Placeholders
         self.routers = []
         self.weights_runtime = []
+        self.start_event, self.stop_event, self.freeze_event = threading.Event(), threading.Event(), threading.Event()
         # Initialization
         self.graph = ensure_connectivity(
             create_random_graph(num_nodes=self.num_routers,
@@ -24,9 +26,13 @@ class NetworkTopology:
         self.routers = [Router(router_id=router_id,
                                num_routers=self.num_routers,
                                num_users=self.num_users,
-                               graph=self.graph)
+                               graph=self.graph,
+                               events=(self.start_event, self.stop_event, self.freeze_event))
                         for router_id in range(self.num_routers)]
         self._update_neighbor_routers()
+        for router in self.routers:
+            router.graph = self.graph
+            router.start()
 
     def _update_neighbor_routers(self):
         for i in range(self.num_routers):
@@ -37,26 +43,29 @@ class NetworkTopology:
             self.routers[i].neighbor_routers = neighbor_routers
 
     def start(self, run_time=20):
-        for router in self.routers:
-            router.graph = self.graph
-            router.start()
-
         start_time = time.time()
+        self.freeze_event.clear()
+        self.start_event.set()
         while time.time() - start_time < run_time:
             time.sleep(1)
             global_congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
             self.weights_runtime.append(global_congestion)
             print(Fore.CYAN + f"Total Graph weight: {global_congestion}")
+        self.start_event.clear()
+        self.freeze_event.set()
 
     def stop(self):
-        for router in self.routers:
-            router.stop()
+        self.stop_event.set()
+        for router in self.routers: router.router_thread.join()
 
     def reset(self):
         self.stop()
         self.weights_runtime = []
-        for u, v in self.graph.edges():
-            self.graph[u][v]['weight'] = 1
+        self.graph = ensure_connectivity(
+            create_random_graph(num_nodes=self.num_routers,
+                                connection_density=self.connection_density)
+        )
+        self._initialize_routers()
 
 def main():
     net = NetworkTopology(num_users=50, num_routers=10, connection_density=0.1)
@@ -66,6 +75,9 @@ def main():
         print(f'{router.router_id}: {list(router.neighbor_routers.keys())}')
     print('=' * 60)
 
+    net.start(run_time=10)
+    print(Fore.BLUE + 'FROZEN')
+    time.sleep(2)
     net.start(run_time=10)
     net.stop()
 
