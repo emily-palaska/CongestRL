@@ -13,7 +13,7 @@ class Router:
         self.router_thread = threading.Thread(target=self.router_thread)
         # Placeholders
         self.neighbor_routers = None
-        self.congestion_times, self.delay_times = [], []
+        self.forwarded_packets, self.delay_times = [], []
         self.packets_created, self.packets_received = 0, 0
         self.send_rate, self.max_send_rate = None, 1000
 
@@ -58,6 +58,5 @@ class Router:
             self.packets_received += len(routed_packets[self.router_id])
             self.delay_times.extend(routed_packets[self.router_id])
 
-            sleep_time = self._forward_packets(routed_packets) if len(routed_packets) > 1 else 0
-            self.congestion_times.append(sleep_time)
-            #time.sleep(sleep_time / 1000)
+            num_packets = self._forward_packets(routed_packets) if len(routed_packets) > 1 else 0
+            self.forwarded_packets.append(num_packets)

@@ -67,6 +67,10 @@ class NetworkTopology:
         )
         self._initialize_routers()
 
+    def sample_delay(self, rate=1000):
+        delay = sum(router.delay_times[-rate] for router in self.routers)
+        return delay / self.num_routers
+
 def main():
     net = NetworkTopology(num_users=50, num_routers=10, connection_density=0.1)
 
