@@ -42,7 +42,7 @@ class CongestionControlEnv(gym.Env):
         congestion, delay = info['congestion'], info['delay']
         return np.concatenate(([congestion], self.last_actions, [delay]), dtype=np.float32)
 
-    def step(self, actions):
+    def step(self, actions, run_time=3):
         assert len(actions) == self.num_routers, f"Given {len(actions)} actions but expected {self.num_routers}"
         self.last_actions = actions
 
@@ -52,38 +52,11 @@ class CongestionControlEnv(gym.Env):
             elif action == 2:
                 router.local_users = min(router.max_send_rate, router.send_rate + 10)
 
-        self.network.start(run_time=3)
+        self.network.start(run_time=run_time)
 
         info = self.network.get_info()
         obs = self._get_obs(info)
         reward = self.reward_func(congestion=info['congestion'], delay=info['delay'],
                                   congestion_limit=self.congestion_limit, alpha=self.alpha, beta=self.beta)
         self.current_step += 1
-        done = self.current_step >= 10
-        return obs, reward, done, info
-
-def run_simulation(env, policy=None, max_steps=10):
-    print('Resetting environment')
-    obs, info = env.reset()
-    print(f"Initial Observation: {obs}\nInfo: {info}")
-
-    for step in range(max_steps):
-        action = policy[obs] if policy else env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-
-        print(f"\nStep {step + 1}")
-        print(f"Action taken: {action}")
-        print(f"Observation: {obs}")
-        print(f"Reward: {reward}")
-        print(f"Info: {info}")
-
-        if done:
-            print("Simulation ended.")
-            break
-
-    env.stop()
-
-if __name__ == "__main__":
-    np.set_printoptions(precision=4, suppress=True)
-    net_env = CongestionControlEnv()
-    run_simulation(net_env)
+        return obs, reward, info
