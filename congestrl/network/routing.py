@@ -15,13 +15,15 @@ class Router:
         self.neighbor_routers = None
         self.forwarded_packets, self.delay_times = [], []
         self.packets_created, self.packets_received = 0, 0
-        self.send_rate, self.max_send_rate = None, 1000
+        self.send_rate, self.max_send_rate = 10, 1000
 
     def start(self):
         self.router_thread.start()
 
-    def _decide_packets_to_send(self):
-        return self.send_rate if self.send_rate else self.max_send_rate
+    def sample_delay(self, rate=1000):
+        if rate < len(self.delay_times):
+            return sum(self.delay_times[-rate:])
+        return sum(self.delay_times)
 
     def _forward_packets(self, routed_packets):
         sleep_time = 0
@@ -38,7 +40,7 @@ class Router:
             self.buffer.put(packet)
 
     def _get_from_buffer(self):
-        num_packets = min(self._decide_packets_to_send(), self.buffer.qsize())
+        num_packets = min(self.send_rate, self.buffer.qsize())
         return [self.buffer.get() for _ in range(num_packets)]
 
     def router_thread(self):

@@ -1,8 +1,8 @@
 import numpy as np
 import gym
 from gym import spaces
-from congestrl.environment.topology import NetworkTopology
-from congestrl.agents.rewards import linear_reward
+from congestrl.network.network import CongestNetwork
+from congestrl.environment.rewards import linear_reward
 
 class CongestionControlEnv(gym.Env):
     def __init__(self, num_routers=10, num_users=50, connection_density=0.1, congestion_limit=10000,
@@ -13,7 +13,7 @@ class CongestionControlEnv(gym.Env):
         self.congestion_limit = congestion_limit
         self.alpha, self.beta = alpha, beta
         self.reward_func = reward_func
-        self.network = NetworkTopology(num_users=num_users, num_routers=num_routers, connection_density=connection_density)
+        self.network = CongestNetwork(num_users=num_users, num_routers=num_routers, connection_density=connection_density)
 
         # Action: each router decides to {0: decrease, 1: maintain, 2: increase} traffic
         self.action_space = spaces.MultiDiscrete([3] * self.num_routers)
@@ -27,13 +27,14 @@ class CongestionControlEnv(gym.Env):
         self.congestion, self.delay = 0.0, 0.0
         self.current_step = 0
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
         self.network.reset()
         self.last_actions = [1] * self.num_routers
         self.congestion, self.delay = 0.0, 0.0
         self.current_step = 0
         info = {'congestion': self.congestion, 'delay': self.delay}
-        return self._get_obs(), info
+        obs = np.array([self.congestion] + self.last_actions + [self.delay], dtype=np.float32)
+        return obs, info
 
     def stop(self):
         self.network.stop()
@@ -53,8 +54,7 @@ class CongestionControlEnv(gym.Env):
             elif action == 2:
                 router.local_users = min(router.max_send_rate, router.send_rate + 10)
 
-        self.network.start(run_time=20)
-        self.network.stop()
+        self.network.start(run_time=3)
 
         self.congestion = sum(data['weight'] for _, _, data in self.network.graph.edges(data=True))
         self.delay = self.network.sample_delay()
@@ -62,8 +62,36 @@ class CongestionControlEnv(gym.Env):
                                   alpha=self.alpha, beta=self.beta)
 
         self.current_step += 1
-        done = self.current_step >= 100  # Or some other condition
+        done = self.current_step >= 10
         obs = self._get_obs()
         info = {'congestion': self.congestion, 'delay': self.delay}
 
         return obs, reward, done, info
+
+def run_simulation(env, policy=None, max_steps=10):
+    obs, info = env.reset()
+    print(f"Initial Observation: {obs}, Info: {info}")
+
+    for step in range(max_steps):
+        if policy is None:
+            action = env.action_space.sample()
+        else:
+            action = policy(obs)
+
+        obs, reward, done, info = env.step(action)
+
+        print(f"\nStep {step + 1}")
+        print(f"Action taken: {action}")
+        print(f"Observation: {obs}")
+        print(f"Reward: {reward}")
+        print(f"Info: {info}\n")
+
+        if done:
+            print("Simulation ended.")
+            break
+
+    env.stop()
+
+if __name__ == "__main__":
+    net_env = CongestionControlEnv()
+    run_simulation(net_env)

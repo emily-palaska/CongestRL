@@ -1,11 +1,10 @@
-from routing import Router
-import time
+import time, threading
 from colorama import Fore
+from congestrl.network.routing import Router
 from congestrl.core import ensure_connectivity, create_random_graph
 from congestrl.visualization.graphs import draw_weights_runtime
-import threading
 
-class NetworkTopology:
+class CongestNetwork:
     def __init__(self, num_users=10, num_routers=10, connection_density=0.5):
         # Arguments
         self.num_users = num_users
@@ -38,7 +37,7 @@ class NetworkTopology:
         for i in range(self.num_routers):
             neighbor_routers = {
                 self.routers[n].router_id: self.routers[n]
-                    for n in self.graph.neighbors(i)
+                for n in self.graph.neighbors(i)
             }
             self.routers[i].neighbor_routers = neighbor_routers
 
@@ -48,9 +47,9 @@ class NetworkTopology:
         self.start_event.set()
         while time.time() - start_time < run_time:
             time.sleep(1)
-            global_congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
-            self.weights_runtime.append(global_congestion)
-            print(Fore.CYAN + f"Total Graph weight: {global_congestion}")
+            #global_congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
+            #self.weights_runtime.append(global_congestion)
+            #print(Fore.CYAN + f"Total Graph weight: {global_congestion}")
         self.start_event.clear()
         self.freeze_event.set()
 
@@ -59,7 +58,6 @@ class NetworkTopology:
         for router in self.routers: router.router_thread.join()
 
     def reset(self):
-        self.stop()
         self.weights_runtime = []
         self.graph = ensure_connectivity(
             create_random_graph(num_nodes=self.num_routers,
@@ -68,11 +66,11 @@ class NetworkTopology:
         self._initialize_routers()
 
     def sample_delay(self, rate=1000):
-        delay = sum(router.delay_times[-rate] for router in self.routers)
+        delay = sum(router.sample_delay(rate=rate) for router in self.routers)
         return delay / self.num_routers
 
 def main():
-    net = NetworkTopology(num_users=50, num_routers=10, connection_density=0.1)
+    net = CongestNetwork(num_users=50, num_routers=10, connection_density=0.1)
 
     print('CONNECTED_ROUTERS')
     for router in net.routers:
@@ -87,7 +85,7 @@ def main():
 
     packets_created = {
         router.router_id: router.packets_created
-            for router in net.routers
+        for router in net.routers
     }
     packets_received = {
         router.router_id: router.packets_received
