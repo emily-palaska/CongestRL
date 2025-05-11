@@ -1,5 +1,5 @@
-from congestrl.core.graph_operations import shortest_path_policy
-from congestrl.core.statistical_operations import probabilistic_redirect
+from congestrl.core.graph import shortest_path_policy
+from congestrl.core.statistics import probabilistic_redirect
 import random, time
 from colorama import Fore
 import numpy as np

@@ -24,25 +24,23 @@ class CongestionControlEnv(gym.Env):
         self.observation_space = spaces.Box(low=low_obs, high=high_obs, dtype=np.float32)
 
         self.last_actions = [1] * self.num_routers  # Start with 'maintain'
-        self.congestion, self.delay = 0.0, 0.0
         self.current_step = 0
 
     def reset(self, seed=None, options=None):
         self.network.reset()
         self.last_actions = [1] * self.num_routers
-        self.congestion, self.delay = 0.0, 0.0
         self.current_step = 0
-        info = {'congestion': self.congestion, 'delay': self.delay}
-        obs = np.array([self.congestion] + self.last_actions + [self.delay], dtype=np.float32)
+        self.network.start(run_time=5) # kick-start to bring to continuous state
+        info = self.network.get_info()
+        obs = self._get_obs(info)
         return obs, info
 
     def stop(self):
         self.network.stop()
 
-    def _get_obs(self):
-        self.congestion = sum(data['weight'] for _, _, data in self.network.graph.edges(data=True))
-        self.delay = self.network.sample_delay()
-        return np.array([self.congestion] + self.last_actions + [self.delay], dtype=np.float32)
+    def _get_obs(self, info):
+        congestion, delay = info['congestion'], info['delay']
+        return np.concatenate(([congestion], self.last_actions, [delay]), dtype=np.float32)
 
     def step(self, actions):
         assert len(actions) == self.num_routers, f"Given {len(actions)} actions but expected {self.num_routers}"
@@ -56,35 +54,28 @@ class CongestionControlEnv(gym.Env):
 
         self.network.start(run_time=3)
 
-        self.congestion = sum(data['weight'] for _, _, data in self.network.graph.edges(data=True))
-        self.delay = self.network.sample_delay()
-        reward = self.reward_func(congestion=self.congestion, delay=self.delay, congestion_limit=self.congestion_limit,
-                                  alpha=self.alpha, beta=self.beta)
-
+        info = self.network.get_info()
+        obs = self._get_obs(info)
+        reward = self.reward_func(congestion=info['congestion'], delay=info['delay'],
+                                  congestion_limit=self.congestion_limit, alpha=self.alpha, beta=self.beta)
         self.current_step += 1
         done = self.current_step >= 10
-        obs = self._get_obs()
-        info = {'congestion': self.congestion, 'delay': self.delay}
-
         return obs, reward, done, info
 
 def run_simulation(env, policy=None, max_steps=10):
+    print('Resetting environment')
     obs, info = env.reset()
-    print(f"Initial Observation: {obs}, Info: {info}")
+    print(f"Initial Observation: {obs}\nInfo: {info}")
 
     for step in range(max_steps):
-        if policy is None:
-            action = env.action_space.sample()
-        else:
-            action = policy(obs)
-
+        action = policy[obs] if policy else env.action_space.sample()
         obs, reward, done, info = env.step(action)
 
         print(f"\nStep {step + 1}")
         print(f"Action taken: {action}")
         print(f"Observation: {obs}")
         print(f"Reward: {reward}")
-        print(f"Info: {info}\n")
+        print(f"Info: {info}")
 
         if done:
             print("Simulation ended.")
@@ -93,5 +84,6 @@ def run_simulation(env, policy=None, max_steps=10):
     env.stop()
 
 if __name__ == "__main__":
+    np.set_printoptions(precision=4, suppress=True)
     net_env = CongestionControlEnv()
     run_simulation(net_env)

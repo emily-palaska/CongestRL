@@ -41,15 +41,15 @@ class CongestNetwork:
             }
             self.routers[i].neighbor_routers = neighbor_routers
 
-    def start(self, run_time=20):
+    def start(self, run_time=20, verbose=False):
         start_time = time.time()
         self.freeze_event.clear()
         self.start_event.set()
         while time.time() - start_time < run_time:
-            time.sleep(1)
-            #global_congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
-            #self.weights_runtime.append(global_congestion)
-            #print(Fore.CYAN + f"Total Graph weight: {global_congestion}")
+            time.sleep(0.5)
+            if verbose:
+                congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
+                print(Fore.CYAN + f'congestion: {congestion}, delay: {self.sample_delay()}')
         self.start_event.clear()
         self.freeze_event.set()
 
@@ -65,9 +65,10 @@ class CongestNetwork:
         )
         self._initialize_routers()
 
-    def sample_delay(self, rate=1000):
-        delay = sum(router.sample_delay(rate=rate) for router in self.routers)
-        return delay / self.num_routers
+    def get_info(self, rate=1000):
+        congestion = sum(data['weight'] for _, _, data in self.graph.edges(data=True))
+        delay = sum(router.sample_delay(rate=rate) for router in self.routers) / self.num_routers
+        return {'congestion': congestion, 'delay': delay}
 
 def main():
     net = CongestNetwork(num_users=50, num_routers=10, connection_density=0.1)
@@ -77,10 +78,10 @@ def main():
         print(f'{router.router_id}: {list(router.neighbor_routers.keys())}')
     print('=' * 60)
 
-    net.start(run_time=10)
+    net.start(run_time=20, verbose=True)
     print(Fore.BLUE + 'FROZEN')
-    time.sleep(2)
-    net.start(run_time=10)
+    #ime.sleep(2)
+    net.start(run_time=5, verbose=True)
     net.stop()
 
     packets_created = {
@@ -92,11 +93,11 @@ def main():
         for router in net.routers
     }
 
-    print(f'Packets created: {packets_created} -> {sum(packets_created.values())}')
-    print(f'Packets received: {packets_received} -> {sum(packets_received.values())}')
-    print('Delay times:')
-    for router in net.routers: print(router.delay_times)
-    draw_weights_runtime(net.weights_runtime)
+    print(f'Packets created: {sum(packets_created.values())}')
+    print(f'Packets received: {sum(packets_received.values())}')
+    #print('Delay times:')
+    #for router in net.routers: print(router.delay_times)
+    #draw_weights_runtime(net.weights_runtime)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 
 
-def linear_reward(congestion, congestion_limit, delay, alpha, beta):
+def linear_reward(congestion, congestion_limit, delay, alpha=1.0, beta=1.0):
     reward = -alpha * delay
     if congestion < 0.6 * congestion_limit:
         reward += beta
