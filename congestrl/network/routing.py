@@ -23,7 +23,7 @@ class Router:
     def sample_delay(self, rate=1000):
         if rate < len(self.delay_times):
             return sum(self.delay_times[-rate:]) / rate
-        return sum(self.delay_times) / len(self.delay_times)
+        return sum(self.delay_times) / (len(self.delay_times) + 1.0e-12)
 
     def _forward_packets(self, routed_packets):
         sleep_time = 0
