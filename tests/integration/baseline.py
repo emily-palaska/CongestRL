@@ -1,13 +1,16 @@
-import numpy as np
-from congestrl.environment.environment import CongestionControlEnv
+from congestrl.simulation.environment import CongestionControlEnv
 from congestrl.policy.utils import random_policy
 from congestrl.core.results import ResultManager
+from policy.rewards import linear_reward
 
-def run_simulation(env, policy=random_policy, episodes=10, steps=10, verbose=True):
-    manager = ResultManager()
+def run_simulation(env, policy=random_policy, episodes=1, steps=1, verbose=True):
+    filename= 'linear' if env.reward_func == linear_reward else ''
+    filename += '_random' if policy == random_policy else ''
+    filename += f'_e{episodes}_s{steps}.json'
+    manager = ResultManager(filename= filename)
 
     for e in range(episodes):
-        if verbose: print('Resetting environment', end='')
+        if verbose: print('\rResetting simulation', end='')
         obs, info = env.reset()
         manager.append_step(info=info)
 
@@ -26,6 +29,5 @@ def run_simulation(env, policy=random_policy, episodes=10, steps=10, verbose=Tru
     env.stop()
 
 if __name__ == "__main__":
-    np.set_printoptions(precision=4, suppress=True)
-    net_env = CongestionControlEnv()
+    net_env = CongestionControlEnv(step_time=5)
     run_simulation(net_env)
