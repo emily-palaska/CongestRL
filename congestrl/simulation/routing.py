@@ -1,12 +1,12 @@
 import threading, queue
 from congestrl.core import demultiplex_packets, create_packets, distributed_partition
-from colorama import Fore
 
 class Router:
-    def __init__(self, router_id, num_routers, num_users, graph, events):
+    def __init__(self, router_id, num_routers, num_users, graph, events, active_periods):
         # Arguments
         self.router_id, self.num_routers, self.graph = router_id, num_routers, graph
         self.local_users = distributed_partition(num_users, num_routers, router_id)
+        self.active_periods = active_periods
         # Threading initialization
         self.start_event, self.stop_event, self.freeze_event = events
         self.incoming_queue, self.buffer = queue.Queue(), queue.Queue()
@@ -56,7 +56,8 @@ class Router:
             if incoming_packets := self.incoming_queue.qsize():
                 for _ in range(incoming_packets): self._add_to_buffer(self.incoming_queue.get())
 
-            routed_packets = demultiplex_packets(self.router_id, self._get_from_buffer())
+            routed_packets = demultiplex_packets(router_id=self.router_id, packets=self._get_from_buffer(),
+                                                 active_periods=self.active_periods)
             self.packets_received += len(routed_packets[self.router_id])
             self.delay_times.extend(routed_packets[self.router_id])
 

@@ -1,24 +1,23 @@
 import numpy as np
 import gym
 from gym import spaces
-from congestrl.network.network import CongestNetwork
-from congestrl.environment.rewards import linear_reward
+from congestrl.simulation.network import CongestNetwork
+from congestrl.policy.rewards import linear_reward
 
 class CongestionControlEnv(gym.Env):
     def __init__(self, num_routers=10, num_users=50, connection_density=0.1, congestion_limit=10000,
-                 alpha=0.1, beta=1.0, reward_func=linear_reward):
+                 step_time=5, alpha=0.1, beta=1.0, reward_func=linear_reward):
         super(CongestionControlEnv, self).__init__()
-        self.num_routers = num_routers
-        self.num_users = num_users
+        self.num_routers, self.num_users = num_routers, num_users
         self.congestion_limit = congestion_limit
-        self.alpha, self.beta = alpha, beta
+        self.step_time, self.alpha, self.beta = step_time, alpha, beta
         self.reward_func = reward_func
         self.network = CongestNetwork(num_users=num_users, num_routers=num_routers, connection_density=connection_density)
 
         # Action: each router decides to {0: decrease, 1: maintain, 2: increase} traffic
         self.action_space = spaces.MultiDiscrete([3] * self.num_routers)
 
-        # Observation: global congestion, last action taken by each router, and average delay
+        # Observations: global congestion, last action taken by each router, and average delay
         low_obs = np.array([0.0] + [0] * self.num_routers + [0.0])
         high_obs = np.array([np.inf] + [2] * self.num_routers + [np.inf])
         self.observation_space = spaces.Box(low=low_obs, high=high_obs, dtype=np.float32)
@@ -30,19 +29,17 @@ class CongestionControlEnv(gym.Env):
         self.network.reset()
         self.last_actions = [1] * self.num_routers
         self.current_step = 0
-        self.network.start(run_time=5) # kick-start to bring to continuous state
-        info = self.network.get_info()
-        obs = self._get_obs(info)
-        return obs, info
+        info =  {'congestion': 0, 'delay': 0.0}
+        return self._get_obs(info), info
 
-    def stop(self):
-        self.network.stop()
+    def stop(self, verbose=True):
+        self.network.stop(verbose=verbose)
 
     def _get_obs(self, info):
         congestion, delay = info['congestion'], info['delay']
         return np.concatenate(([congestion], self.last_actions, [delay]), dtype=np.float32)
 
-    def step(self, actions, run_time=3):
+    def step(self, actions):
         assert len(actions) == self.num_routers, f"Given {len(actions)} actions but expected {self.num_routers}"
         self.last_actions = actions
 
@@ -52,7 +49,7 @@ class CongestionControlEnv(gym.Env):
             elif action == 2:
                 router.local_users = min(router.max_send_rate, router.send_rate + 10)
 
-        self.network.start(run_time=run_time)
+        self.network.start(run_time=self.step_time)
 
         info = self.network.get_info()
         obs = self._get_obs(info)
