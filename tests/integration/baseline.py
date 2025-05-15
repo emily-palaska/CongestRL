@@ -1,16 +1,13 @@
 from congestrl.simulation.environment import CongestionControlEnv
-from congestrl.policy.utils import random_policy
+from congestrl.policy.agents import random_policy
 from congestrl.core.results import ResultManager
-from policy.rewards import linear_reward
 
-def run_simulation(env, policy=random_policy, episodes=1, steps=1, verbose=True):
-    filename= 'linear' if env.reward_func == linear_reward else ''
-    filename += '_random' if policy == random_policy else ''
-    filename += f'_e{episodes}_s{steps}.json'
+def run_simulation(env, policy=random_policy, episodes=1, steps=1):
+    filename = f'baseline_e{episodes}_s{steps}.json'
     manager = ResultManager(filename= filename)
 
     for e in range(episodes):
-        if verbose: print('\rResetting simulation', end='')
+        print('\rResetting simulation', end='')
         obs, info = env.reset()
         manager.append_step(info=info)
 
@@ -18,14 +15,14 @@ def run_simulation(env, policy=random_policy, episodes=1, steps=1, verbose=True)
             action = policy(env.action_space)
             obs, reward, info = env.step(action)
 
-            if verbose: print(f"\rStep {step + 1}", end='')
+            print(f"\rStep {step + 1}", end='')
             manager.append_step(reward=reward, info=info)
 
         manager.append_episode()
-        if verbose: print(f'\rEpisode {e} completed')
+        print(f'\rEpisode {e} completed')
 
     manager.save()
-    if verbose: print(f'Results saved in {manager.full_path}')
+    print(f'Results saved in {manager.full_path}')
     env.stop()
 
 if __name__ == "__main__":
