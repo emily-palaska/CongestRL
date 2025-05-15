@@ -1,10 +1,13 @@
 import json, os
+import numpy as np
 
 class ResultManager:
-    def __init__(self, filename='results.json', path=r'D:\Σχολή\8ο εξάμηνο\Υπολογιστική Νοημοσύνη - Βαθιά Ενισχυτική Μάθηση\2025\CongestRL\results'):
+    def __init__(self, filename='results.json', metadata=None, autosave=True,
+                 path=r'D:\Σχολή\8ο εξάμηνο\Υπολογιστική Νοημοσύνη - Βαθιά Ενισχυτική Μάθηση\2025\CongestRL\results'):
         self.filename = filename
         self.full_path = os.path.join(path, filename)
-        self.results = {}
+        self.autosave = autosave
+        self.results = {} if metadata is None else {'metadata': metadata}
         self.current_episode = None
 
     def __len__(self):
@@ -22,16 +25,23 @@ class ResultManager:
             json.dump(self.results, f, indent=4)
 
     def append_step(self, info=None, reward=None):
+        last_action, congestions, delays, send_rates = info['last_action'], info['congestions'], info['delays'], info['send_rates']
+        if isinstance(last_action, np.ndarray): last_action = last_action.tolist()
+
         if self.current_episode is None:
             self.current_episode = {
-                'congestions': [info['congestion']],
-                'delays': [info['delay']],
-                'rewards': [reward]
+                'last_actions': [last_action],
+                'congestions': [congestions],
+                'delays': [delays],
+                'rewards': [reward],
+                'send_rates': [send_rates]
         }
         else:
-            self.current_episode['congestions'].append(info['congestion'])
-            self.current_episode['delays'].append(info['delay'])
+            self.current_episode['last_actions'].append(last_action)
+            self.current_episode['congestions'].append(congestions)
+            self.current_episode['delays'].append(delays)
             self.current_episode['rewards'].append(reward)
+            self.current_episode['send_rates'].append(send_rates)
 
     def append_episode(self):
         if self.current_episode is None:
@@ -39,7 +49,8 @@ class ResultManager:
             return
 
         n = len(self.results)
-        self.results[n] = self.current_episode
+        self.results[f'episode {n}'] = self.current_episode
+        if self.autosave: self.save()
         self.current_episode = None
 
     def get_data(self, key='congestion'):
