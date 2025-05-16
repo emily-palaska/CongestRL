@@ -34,5 +34,5 @@ def run_dqn(env, episodes=10, steps=200):
     env.stop()
 
 if __name__ == "__main__":
-    demo_env = CongestionControlEnv(num_routers=10, num_users=50, step_time=5)
+    demo_env = CongestionControlEnv(num_routers=10, num_users=50, step_time=5, congestion_limit=8000)
     run_dqn(demo_env)
