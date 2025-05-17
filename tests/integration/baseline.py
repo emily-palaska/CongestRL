@@ -1,10 +1,12 @@
 from congestrl.simulation.environment import CongestionControlEnv
 from congestrl.policy.agents import random_policy
 from congestrl.core.results import ResultManager
+from datetime import datetime
 
-def run_simulation(env, policy=random_policy, episodes=1, steps=1):
-    filename = f'baseline_e{episodes}_s{steps}.json'
-    manager = ResultManager(filename= filename)
+def run_simulation(env, policy=random_policy, episodes=10, steps=20):
+    timestamp = datetime.now().strftime("%m%d_%H%M")
+    filename = f'{timestamp}_baseline_e{episodes}_s{steps}.json'
+    manager = ResultManager(filename= filename, metadata = env.metadata | {'policy': policy.__name__})
 
     for e in range(episodes):
         print('\rResetting simulation', end='')
