@@ -6,7 +6,7 @@ from datetime import datetime
 def run_simulation(env, policy=random_policy, episodes=10, steps=20):
     timestamp = datetime.now().strftime("%m%d_%H%M")
     filename = f'{timestamp}_baseline_e{episodes}_s{steps}.json'
-    manager = ResultManager(filename= filename, metadata = env.metadata | {'policy': policy.__name__})
+    manager = ResultManager(filename= filename, metadata = {'policy': policy.__name__, **env.metadata})
 
     for e in range(episodes):
         print('\rResetting simulation', end='')

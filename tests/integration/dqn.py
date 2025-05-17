@@ -10,7 +10,7 @@ def run_dqn(env, episodes=10, steps=200):
 
     timestamp = datetime.now().strftime("%m%d_%H%M")
     filename = f'{timestamp}_dqn_e{episodes}_s{steps}.json'
-    manager = ResultManager(filename=filename, metadata=agent.metadata | env.metadata)
+    manager = ResultManager(path='../../results/' ,filename=filename, metadata={**agent.metadata, **env.metadata})
 
     for e in range(episodes):
         state, info = env.reset()

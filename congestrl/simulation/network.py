@@ -1,6 +1,6 @@
 import time, threading
 from colorama import Fore
-from simulation.routing import Router
+from congestrl.simulation.routing import Router
 from congestrl.core import ensure_connectivity, create_random_graph
 
 class CongestNetwork:
