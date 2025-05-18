@@ -1,5 +1,3 @@
-
-
 def linear_reward(congestions: list, delays: list,  congestion_limit: int, alpha=1.0, beta=1.0):
     reward = -alpha * sum(delays) / len(delays)
 
