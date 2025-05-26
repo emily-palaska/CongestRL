@@ -44,7 +44,7 @@ def plot_congestion_over_time(data):
             if congestions:  # Only process if there are congestion data
                 congestions = [sum(c) / len(c) for c in congestions]
                 episode_num = int(key.split()[1])
-                plt.plot(congestions, label=f'Episode {episode_num}')
+                if episode_num in (1, 5, 10): plt.plot(congestions, label=f'Episode {episode_num}')
 
     plt.xlabel('Time Step')
     plt.ylabel('Congestion')
@@ -85,7 +85,7 @@ def plot_delay_heatmap(data):
 
 
 def main():
-    filename = '../../results/0517_0900_baseline_e10_s20.json'
+    filename = '../../results/0518_1908_dqn_e10_s200.json'
     data = load_json_data(filename)
 
     plot_reward_distribution(data)

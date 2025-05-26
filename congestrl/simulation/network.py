@@ -48,7 +48,8 @@ class CongestNetwork:
         while time.time() - start_time < run_time:
             time.sleep(0.1)
             self.congestions.append(self.sample_congestion())
-            if verbose: print(Fore.CYAN + f'congestion: {self.congestions[-1]}, delay: {sum(self.get_delays()) / self.num_routers}')
+            delay = sum(d for d in self.get_delays().values()) / self.num_routers
+            if verbose: print(Fore.CYAN + f'congestion: {self.congestions[-1]}, delay: {delay}')
 
         end_time = time.time()
         if len(self.active_periods) >= 100: self.active_periods.pop(0)

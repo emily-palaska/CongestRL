@@ -28,5 +28,5 @@ def run_simulation(env, policy=random_policy, episodes=10, steps=20):
     env.stop()
 
 if __name__ == "__main__":
-    net_env = CongestionControlEnv(step_time=5)
+    net_env = CongestionControlEnv(num_routers=100, num_users=100,step_time=5)
     run_simulation(net_env)
