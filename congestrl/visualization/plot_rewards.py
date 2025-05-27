@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from congestrl.policy.rewards import linear_reward, quadratic_reward, exponential_reward
 
-def plot_parametric_sweep(reward_function=linear_reward, congestion_limit=1000, alpha=0.1, beta=1.0):
+def plot_parametric_sweep(reward_function=linear_reward, congestion_limit=1000, alpha=2, beta=1.0):
     delays = np.linspace(0, 10, 200)
     rewards_per_delay = [
         reward_function([], [d], congestion_limit=congestion_limit, alpha=alpha, beta=beta)
@@ -33,4 +33,4 @@ def plot_parametric_sweep(reward_function=linear_reward, congestion_limit=1000, 
     plt.show()
 
 
-plot_parametric_sweep(reward_function=quadratic_reward)
+plot_parametric_sweep(reward_function=exponential_reward)
