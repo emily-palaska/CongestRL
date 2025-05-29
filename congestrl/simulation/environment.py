@@ -24,7 +24,6 @@ class CongestionControlEnv(gym.Env):
         self.last_action = [0] * self.num_routers
         self.congestions = [0] * 25
         self.delays = {router_id: 0 for router_id in range(self.num_routers)}
-        self.current_step = 0
 
     def _initialize_metadata(self):
         self.metadata = {
@@ -55,7 +54,6 @@ class CongestionControlEnv(gym.Env):
         self.last_action = [0] * self.num_routers
         self.congestions = [0] * 25
         self.delays = {router_id: 0 for router_id in range(self.num_routers)}
-        self.current_step = 0
         return self._get_obs(), self._get_info()
 
     def stop(self,):
@@ -85,5 +83,4 @@ class CongestionControlEnv(gym.Env):
         self.congestions, self.delays = self.network.get_congestions(), self.network.get_delays()
         reward = self.reward_func(congestions=self.congestions, delays=self.delays,
                                   congestion_limit=self.congestion_limit, alpha=self.alpha, beta=self.beta)
-        self.current_step += 1
         return self._get_obs(), reward, self._get_info()
