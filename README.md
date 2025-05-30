@@ -1,5 +1,6 @@
-# CongestRL: Reinforcement Learning Congestion Control in Virtual Network Simulation
+<p align=center> <img title="Logo" alt="CongestRL" src="results/plots/logo.png" width=300> 
 
+## CongestRL: Reinforcement Learning Congestion Control in Virtual Network Simulation
 
 This project was made for the Computational Intelligence & Deep Reinforcement Learning course of ECE AuTH.
 As part of it, a parrelizable virtual netwrok consisting of routers that exchange packets was implemented.
