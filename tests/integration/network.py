@@ -3,7 +3,7 @@ from colorama import Fore
 import time
 
 def main():
-    net = CongestNetwork(num_users=50, num_routers=100)
+    net = CongestNetwork(num_users=10, num_routers=50)
 
     net.start(run_time=30, verbose=True)
     print(Fore.BLUE + 'FROZEN')

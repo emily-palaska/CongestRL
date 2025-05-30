@@ -11,7 +11,7 @@ def ensure_connectivity(G):
             components = list(nx.connected_components(G))
     return G
 
-def create_random_graph(num_nodes, connection_density=0.05):
+def create_random_graph(num_nodes, connection_density=0.1):
     G = nx.Graph()
     G.add_nodes_from([i for i in range(num_nodes)])
     for i in range(num_nodes):

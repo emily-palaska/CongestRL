@@ -4,7 +4,7 @@ from congestrl.simulation.routing import Router
 from congestrl.core import ensure_connectivity, create_random_graph
 
 class CongestNetwork:
-    def __init__(self, num_users=10, num_routers=10, connection_density=0.5):
+    def __init__(self, num_users=10, num_routers=10, connection_density=0.1):
         # Arguments
         self.num_users = num_users
         self.num_routers = num_routers
