@@ -1,4 +1,4 @@
-from congestrl.simulation.environment import CongestionControlEnv
+from congestrl.simulation.environment import CongestControlEnv
 from congestrl.policy.agents import random_policy
 from congestrl.core.results import ResultManager
 from datetime import datetime
@@ -28,5 +28,5 @@ def run_simulation(env, policy=random_policy, episodes=10, steps=20):
     env.stop()
 
 if __name__ == "__main__":
-    net_env = CongestionControlEnv(num_routers=100, num_users=100,step_time=5)
+    net_env = CongestControlEnv(r=100, u=100, step_time=5)
     run_simulation(net_env)

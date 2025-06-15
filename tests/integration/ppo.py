@@ -1,5 +1,5 @@
 from congestrl.policy.ppo_agent import PPOAgent
-from congestrl.simulation.environment import CongestionControlEnv
+from congestrl.simulation.environment import CongestControlEnv
 from congestrl.core.results import ResultManager
 from datetime import datetime
 
@@ -34,5 +34,5 @@ def run_ppo(env, episodes=10, steps=200):
     env.stop()
 
 if __name__ == "__main__":
-    demo_env = CongestionControlEnv(num_routers=10, num_users=50, step_time=5, congestion_limit=8000)
+    demo_env = CongestControlEnv(r=10, u=50, limit=8000, step_time=5)
     run_ppo(demo_env)

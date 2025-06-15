@@ -4,19 +4,18 @@ from gym import spaces
 from congestrl.simulation.network import CongestNetwork
 from congestrl.policy.rewards import linear_reward
 
-class CongestionControlEnv(gym.Env):
-    def __init__(self, num_routers=10, num_users=50, connection_density=0.1, congestion_limit=10000,
-                 step_time=5, alpha=0.1, beta=1.0, reward_func=linear_reward):
-        super(CongestionControlEnv, self).__init__()
+class CongestControlEnv(gym.Env):
+    def __init__(self, r=10, u=50, dens=0.1, limit=10000, step_time=5, alpha=0.1, beta=1.0, reward=linear_reward):
+        super(CongestControlEnv, self).__init__()
         # Metadata
-        self.num_routers, self.num_users = num_routers, num_users
-        self.connection_density, self.congestion_limit = connection_density, congestion_limit
+        self.num_routers, self.num_users = r, u
+        self.connection_density, self.congestion_limit = dens, limit
         self.step_time, self.alpha, self.beta = step_time, alpha, beta
-        self.reward_func = reward_func
+        self.reward_func = reward
 
         # Initialization
-        self.network = CongestNetwork(num_users=num_users, num_routers=num_routers,
-                                      connection_density=connection_density)
+        self.network = CongestNetwork(num_users=u, num_routers=r,
+                                      connection_density=dens)
         self._initialize_metadata()
         self._initialize_spaces()
 
