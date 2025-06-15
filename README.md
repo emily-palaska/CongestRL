@@ -126,11 +126,12 @@ Reward function implemented include linear, quadratic and exponential approaches
 ## 🌐Results
 Agents are trained to modify the routers' send rates in order to keep congestion below the `congestion_limit` while keeping delay as low as possible as the network topology allows. 
 Reinforcement learning policies managed to stabilize send rates, favoring routers in more connected positions.
-<p align=center> <img title="Episode 1" src="results/plots/3_send_rates_heatmap_1.png" height=350px> <img title="Episode 9" src="results/plots/8_send_rates_heatmap_9.png" height=350px> 
-
+<p align=center> <img title="Episode 1" src="results/plots/3_send_rates_heatmap_1.png" height=300px>
+<p align=center>  <img title="Episode 9" src="results/plots/8_send_rates_heatmap_9.png" height=300px> 
+    
 Furthermore, as the agents trained, the congestion showed less spikes, showing that the structures learned to decrease the send rates.
-<p align=center> <img title="Different Policies for Episodes 1, 5 and 10" src="results/plots/1_congestion_mean.png" height=350px>
+<p align=center> <img title="Different Policies for Episodes 1, 5 and 10" src="results/plots/1_congestion_mean.png" height=300px>
 
 Lastly, a sweep of parameter a, which controls the degree of importance for the delay times showed that CongestRL provides flexivility to different network goals.
-<p align=center> <img title="Delay Times for Different a values" src="results/plots/7_mean_delays.png" height=350px>
+<p align=center> <img title="Delay Times for Different a values" src="results/plots/7_mean_delays.png" height=300px>
 
