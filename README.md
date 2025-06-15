@@ -107,7 +107,7 @@ a DQN and PPO agent, with 3 different reward functions for testing.
 
 The CongestNetwork is represented as a connected, undirected graph G(R,E), where R denotes routers (nodes) and E the weighted connections (edges).
 The topology follows a non-deterministic initialization, which aims to avoid overtaining the neural networks on a specific dynamic.
-<p align=center> <img title="Network Example" src="results/plots/network_0.1.png" height=350px> <img title="Network Example" src="results/plots/network_0.5.png" height=350px> 
+<p align=center> <img title="Network Example" src="results/plots/network_0.1.png" height=300px> <img title="Network Example" src="results/plots/network_0.5.png" height=300px> 
 
 The packet structure includes dummy information to simulate information exchange.
 The metrics used in this environment are the 2.5s of congestion samples (sum of edges' weights) and the average delay time per router (last 1000 packets).
