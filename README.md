@@ -132,6 +132,6 @@ Reinforcement learning policies managed to stabilize send rates, favoring router
 Furthermore, as the agents trained, the congestion showed less spikes, showing that the structures learned to decrease the send rates.
 <p align=center> <img title="Different Policies for Episodes 1, 5 and 10" src="results/plots/1_congestion_mean.png" height=250px>
 
-Lastly, a sweep of parameter a, which controls the degree of importance for the delay times showed that CongestRL provides flexivility to different network goals.
+Lastly, a sweep of the parameter a, ie the weight of the delay times in the reward functions, showed that CongestRL provides flexivility to different network goals.
 <p align=center> <img title="Delay Times for Different a values" src="results/plots/7_mean_delays.png" height=300px>
 
