@@ -1,7 +1,6 @@
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import defaultdict
 
 
 def load_json_data(filename):
